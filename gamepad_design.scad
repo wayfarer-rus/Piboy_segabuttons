@@ -1,24 +1,34 @@
-offset_from_center=[0,0,0];
 
 module buttonHole(offset, button_D, border_width) {
 	translate(offset) cylinder(h = 200, d = button_D+1, center = true, $fn=200);
 }
 
 module button(switch_H, offset, button_D, border_width) {
-	translate(offset + [0,0,switch_H/2]) cylinder(h = switch_H-1, d = (button_D+2*border_width), center = true, $fn=200);
+	translate(offset+[0,0,(switch_H-1)/2]) cylinder(h = switch_H-1, d = (button_D+2*border_width), center = true, $fn=200);
 }
 
-module modifiedPiboy(cross_offset, buttons_offset, plate_XY) {
+module gamepadMask() {
+	gamepadSize = [73,90,100];
+	offset = [-20,0,0];
+	difference() {
+		cube([200,100,100], center=true);
+		translate(offset) cube(gamepadSize, center=true);
+	}
+}
+
+module modifiedPiboy(cross_offset, buttons_offset, plate_XY, ss_offset, ss_size_XY, new_ssm_offset, new_ssm_size_XY) {
 	eraser_width = 100;
 	button_eraser = plate_XY + [0,0,eraser_width];
+	ss_eraser = ss_size_XY + [0,0,eraser_width];
+	ss_eraser2 = new_ssm_size_XY + [0,0,eraser_width];;
 	top_width = 2;
 	
-	union() {
-		difference() {
-			import("./STL-files/piboy-top.stl", 10);
-			translate(cross_offset) cylinder(h=100, d=35, center=true, $fn=200);
-			translate(buttons_offset) cube(button_eraser, center=true);
-		}
+	difference() {
+		import("./STL-files/piboy-top.stl", 10);
+		translate(cross_offset) cylinder(h=100, d=35, center=true, $fn=200);
+		translate(buttons_offset) cube(button_eraser, center=true);
+		translate(ss_offset) cube(ss_eraser, center=true);
+		translate(new_ssm_offset) cube(ss_eraser2, center=true);
 	}
 }
 
@@ -48,7 +58,7 @@ module newButtonHoles(plate_offset, plate_XY, buttons_offset) {
                      ];
 	big_button_D = 10;
 	smaller_button_D = 8;
-	switch_H = 7;
+	switch_H = 4;
 	border_width = 2;
 
 	difference() {
@@ -66,16 +76,128 @@ module newButtonHoles(plate_offset, plate_XY, buttons_offset) {
 	}
 }
 
-cross_offset=[-15,-23.5,0];
-buttons_plate_offset=[-17,20,0];
-buttons_plate_size_XY = [35,44,0];
-buttons_offset = [-7,0,0];
 
-translate(offset_from_center) {
-	union() {
-		modifiedPiboy(cross_offset,buttons_plate_offset,buttons_plate_size_XY);
-		modifiedBezel(cross_offset);
-		newButtonHoles(buttons_plate_offset,buttons_plate_size_XY, buttons_offset);
+module newSelectStartMenueButtons(ss_offset, ss_size_XY, new_ssm_offset, new_ssm_size_XY) {
+	top_width = 2;
+	buttons = [[0,0,0], [0,17,0], [0,-10,0]];
+	button_d = 5;
+	switch_H = 4;
+	border_width = 2;
+
+	difference() {
+		union() {
+			translate(ss_offset + [0,0,top_width/2]) cube(ss_size_XY + [0,0,top_width], center=true);
+			translate(new_ssm_offset + [0,0,top_width/2]) cube(new_ssm_size_XY + [0,0,top_width], center=true);
+			for(i = [0:1:2]) {
+				button(switch_H, buttons[i]+new_ssm_offset, button_d, border_width);
+			}
+		}
+		for(i = [0:1:2]) {
+			buttonHole(buttons[i]+new_ssm_offset, button_d, border_width);
+		}
 	}
 }
 
+module gamepad_top() {
+	// offset from model's center point
+	cross_offset=[-15,-23.5,0];
+	buttons_plate_offset=[-15,20,0];
+	buttons_plate_size_XY = [35,44,0];
+	buttons_offset = [-7,0,0];
+	select_start_plate_offset = [-42, 0, 0];
+	select_start_size_XY = [20,35,0];
+	new_ssm_plate_size_XY = [10,40,0];
+	new_ssm_plate_offset = [8,0,0];
+
+	difference() {
+		union() {
+			modifiedPiboy(cross_offset,buttons_plate_offset,buttons_plate_size_XY, select_start_plate_offset, select_start_size_XY, new_ssm_plate_offset, new_ssm_plate_size_XY);
+			modifiedBezel(cross_offset);
+			newButtonHoles(buttons_plate_offset,buttons_plate_size_XY, buttons_offset);
+			newSelectStartMenueButtons(select_start_plate_offset, select_start_size_XY, new_ssm_plate_offset, new_ssm_plate_size_XY);
+		}
+
+		gamepadMask();
+	}
+}
+
+module buttons_base() {
+	buttons_base_points = [[10,40], [12,20], [12,-15], [3,-13], [0,-4], [-30,-2], [-29,20], [-23,40]];
+	buttons_centers = [[8,0,0],
+							[8,17,0],
+							[8,-10,0],
+							[-16.05,30.5,0],
+							[-22.05,17.5,0],
+							[-23.05,4.5,0],
+							[-3, 30.45,0],
+							[-9, 17.5,0],
+							[-10, 4.5,0]];
+	wire_holes = [[8,23,0],
+						[-16.05,36.5,0],
+						[-3, 36.4,0],
+						[-3, 17.5,0],
+						[-4, 4.5,0]];
+	wire_pathes = [[2,0,0],
+							[2,-10,0],
+							[-28.05,17.5,0],
+							[-29.05,4.5,0]];
+	button_base_size = [6,6,3.5];
+	button_border_size = [10,10,3.5];
+	difference() {
+		union() {
+			translate([-10,-41,8.5]) {
+				linear_extrude(height = 1, convexity = 10, twist = 0) {
+					difference() {
+						minkowski($fn=200) {
+							polygon(buttons_base_points);
+							translate([10,41,0]) circle(r=2);
+						}
+						translate([16.1,77.8,0]) circle(r=3.5, $fn=200);
+					}
+				}
+			}
+			for(i = buttons_centers) {
+				translate(i + [-5,-5,5]) cube(button_border_size);
+			}
+		}
+		for(i = buttons_centers) {
+			translate(i + [-3,-3,5]) cube(button_base_size);
+		}
+		for(i = wire_holes) {
+			translate(i + [-3,-3,5]) cube(button_base_size+[0,0,10]);
+		}
+		for(i = wire_pathes) {
+			translate(i + [-3,-3,5]) cube(button_base_size);
+		}
+	}
+}
+
+module cross_secure_ring() {
+	cross_offset=[-15,-23.5,0];
+	cylinder_h = 20;
+	difference() {
+		translate(cross_offset+[0,0,cylinder_h/2+2]) cylinder(d=45, h=cylinder_h, center=true, $fn=200);
+		translate(cross_offset+[0,0,cylinder_h/2+2]) cylinder(d=36, h=cylinder_h, center=true, $fn=200);
+	}
+}
+
+difference() {
+	union() {
+		gamepad_top();
+		buttons_base();
+	}
+	cross_secure_ring();
+}
+
+//buttons projection
+union() {
+	translate([8,0,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([8,17,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([8,-10,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([-16.05,30.5,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([-22.05,17.5,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([-23.05,4.5,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([-3, 30.45,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([-9, 17.5,0]) cylinder(d=1, h=100, center=true, $fn=200);
+	translate([-10, 4.5,0]) cylinder(d=1, h=100, center=true, $fn=200);
+}
