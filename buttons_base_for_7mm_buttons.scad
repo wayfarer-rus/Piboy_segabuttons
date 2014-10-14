@@ -1,0 +1,1 @@
+translate([0,0,11.5]) rotate([0,180,0]) import("buttons_base_for_7mm_buttons.stl", 10);
